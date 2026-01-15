@@ -1,143 +1,151 @@
+import { PDFDocument, PDFPage } from "pdf-lib";
 import { drawRow } from "../layout/row";
 import { drawSectionTitle } from "../layout/section";
 import { formatCurrency } from "../utils/format";
 import { createPageManager } from "../utils/pageManager";
 
+/**
+ * SAFE, STABLE ADMISSION PDF TEMPLATE
+ * ✅ Text-first
+ * ✅ Optional images (photo + barcode)
+ * ❌ No fetching
+ * ❌ No async
+ * ❌ Cannot blank PDF
+ */
 export function drawAdmissionTemplate(
-  pdfDoc: any,
+  pdfDoc: PDFDocument,
   fonts: any,
   data: any,
-  logo: any
+  logo?: any
 ) {
   const pm = createPageManager(pdfDoc, fonts, logo, {
     studentId: data?.meta?.studentId,
   });
 
+  /* ============================================================
+     STUDENT IDENTITY BLOCK (IMAGE + BARCODE)
+     ⚠️ Images MUST already be embedded and attached to data
+  ============================================================ */
+
+  pm.draw(
+    (page: PDFPage, y: number) => {
+      const startX = 50;
+      const startY = y;
+
+      // ---------------- STUDENT PHOTO ----------------
+      if (data?._studentPhotoImage) {
+        page.drawImage(data._studentPhotoImage, {
+          x: startX,
+          y: startY - 120,
+          width: 90,
+          height: 110,
+        });
+      }
+
+      // ---------------- BARCODE ----------------
+      if (data?._barcodeImage) {
+        page.drawImage(data._barcodeImage, {
+          x: startX + 120,
+          y: startY - 95,
+          width: 200,
+          height: 60,
+        });
+      }
+    },
+    140 // FIXED HEIGHT — prevents overlap & blank pages
+  );
+
+  pm.space(20);
+
   /* ================= PERSONAL DETAILS ================= */
 
   pm.draw(
     (p, y) => drawSectionTitle(p, fonts, "Personal Details", y),
-    28
+    30
   );
 
-  pm.draw((p, y) => drawRow(p, fonts, "Full Name", data.student?.fullName, y), 16);
-  pm.draw((p, y) => drawRow(p, fonts, "Email", data.student?.email, y), 16);
-  pm.draw((p, y) => drawRow(p, fonts, "Mobile", data.student?.mobile, y), 22);
+  pm.draw((p, y) => drawRow(p, fonts, "Full Name", data.student?.fullName ?? "-", y), 18);
+  pm.draw((p, y) => drawRow(p, fonts, "Email", data.student?.email ?? "-", y), 18);
+  pm.draw((p, y) => drawRow(p, fonts, "Mobile", data.student?.mobile ?? "-", y), 18);
+  pm.draw((p, y) => drawRow(p, fonts, "DOB", data.student?.dob ?? "-", y), 18);
+  pm.draw((p, y) => drawRow(p, fonts, "Gender", data.student?.gender ?? "-", y), 26);
 
   /* ================= ADDRESS ================= */
 
-  pm.draw(
-    (p, y) => drawSectionTitle(p, fonts, "Address Details", y),
-    32
-  );
+  if (data.address) {
+    pm.draw(
+      (p, y) => drawSectionTitle(p, fonts, "Address Details", y),
+      30
+    );
 
-  pm.draw(
-    (p, y) => drawRow(p, fonts, "Permanent Address", data.address?.permanent, y, true),
-    36
-  );
+    pm.draw(
+      (p, y) =>
+        drawRow(p, fonts, "Permanent Address", data.address.permanent ?? "-", y),
+      36
+    );
 
-  pm.draw(
-    (p, y) => drawRow(p, fonts, "Current Address", data.address?.current, y, true),
-    36
-  );
+    pm.draw(
+      (p, y) =>
+        drawRow(p, fonts, "Current Address", data.address.current ?? "-", y),
+      36
+    );
+  }
 
   /* ================= EDUCATION ================= */
 
-  if (data.education?.length) {
+  if (Array.isArray(data.education) && data.education.length) {
     pm.draw(
       (p, y) => drawSectionTitle(p, fonts, "Education Details", y),
-      32
+      30
     );
 
     data.education.forEach((edu: any) => {
-      pm.draw((p, y) => drawRow(p, fonts, "Level", edu.level, y), 16);
-      pm.draw((p, y) => drawRow(p, fonts, "Institute", edu.institute, y), 16);
-      pm.draw((p, y) => drawRow(p, fonts, "Board", edu.board, y), 16);
-      pm.draw((p, y) => drawRow(p, fonts, "Year", edu.year, y), 16);
-      pm.draw((p, y) => drawRow(p, fonts, "Marks", edu.marks, y), 22);
+      pm.draw((p, y) => drawRow(p, fonts, "Level", edu.level ?? "-", y), 18);
+      pm.draw((p, y) => drawRow(p, fonts, "Institute", edu.institute ?? "-", y), 18);
+      pm.draw((p, y) => drawRow(p, fonts, "Board / University", edu.board ?? "-", y), 18);
+      pm.draw((p, y) => drawRow(p, fonts, "Year", edu.year ?? "-", y), 18);
+      pm.draw((p, y) => drawRow(p, fonts, "Marks", edu.marks ?? "-", y), 26);
     });
   }
 
   /* ================= WORK EXPERIENCE ================= */
 
-  if (data.workExperience?.length) {
+  if (Array.isArray(data.workExperience) && data.workExperience.length) {
     pm.draw(
       (p, y) => drawSectionTitle(p, fonts, "Work Experience", y),
-      32
+      30
     );
 
     data.workExperience.forEach((job: any) => {
-      pm.draw((p, y) => drawRow(p, fonts, "Employer", job.employer, y), 16);
-      pm.draw((p, y) => drawRow(p, fonts, "Role", job.role, y), 16);
-      pm.draw((p, y) => drawRow(p, fonts, "Period", job.period, y), 22);
+      pm.draw((p, y) => drawRow(p, fonts, "Employer", job.employer ?? "-", y), 18);
+      pm.draw((p, y) => drawRow(p, fonts, "Role", job.role ?? "-", y), 18);
+      pm.draw((p, y) => drawRow(p, fonts, "Period", job.period ?? "-", y), 26);
     });
   }
 
-  /* ================= COURSES ================= */
+  /* ================= COURSES & FEES ================= */
 
-  if (data.courses?.length) {
+  if (Array.isArray(data.courses) && data.courses.length) {
     pm.draw(
       (p, y) => drawSectionTitle(p, fonts, "Courses & Fees", y),
-      32
+      30
     );
 
-    let total = 0;
+    let totalFee = 0;
 
-    data.courses.forEach((c: any) => {
-      total += c.fee;
-      pm.draw((p, y) => drawRow(p, fonts, "Course", c.name, y), 16);
-      pm.draw((p, y) => drawRow(p, fonts, "Fee", formatCurrency(c.fee), y), 22);
+    data.courses.forEach((course: any) => {
+      const fee = Number(course.fee ?? 0);
+      totalFee += fee;
+
+      pm.draw((p, y) => drawRow(p, fonts, "Course", course.name ?? "-", y), 18);
+      pm.draw((p, y) => drawRow(p, fonts, "Fee", formatCurrency(fee), y), 22);
     });
 
     pm.draw(
-      (p, y) => drawRow(p, fonts, "Total Fee", formatCurrency(total), y),
-      26
+      (p, y) =>
+        drawRow(p, fonts, "Total Fee", formatCurrency(totalFee), y),
+      28
     );
-  }
-
-  /* ================= HONORS ================= */
-
-  if (data.honors?.length) {
-    pm.draw(
-      (p, y) => drawSectionTitle(p, fonts, "Honors & Awards", y),
-      32
-    );
-
-    data.honors.forEach((h: any) => {
-      pm.draw((p, y) => drawRow(p, fonts, "Title", h.name, y), 16);
-      pm.draw((p, y) => drawRow(p, fonts, "By", h.by, y), 16);
-      pm.draw((p, y) => drawRow(p, fonts, "Year", h.year, y), 22);
-    });
-  }
-
-  /* ================= PUBLICATIONS ================= */
-
-  if (data.publications?.length) {
-    pm.draw(
-      (p, y) => drawSectionTitle(p, fonts, "Publications", y),
-      32
-    );
-
-    data.publications.forEach((pub: any) => {
-      pm.draw((p, y) => drawRow(p, fonts, "Title", pub.title, y), 16);
-      pm.draw((p, y) => drawRow(p, fonts, "Type", pub.type, y), 16);
-      pm.draw((p, y) => drawRow(p, fonts, "DOI", pub.doi, y), 22);
-    });
-  }
-
-  /* ================= CONFERENCES ================= */
-
-  if (data.conferences?.length) {
-    pm.draw(
-      (p, y) => drawSectionTitle(p, fonts, "Conferences", y),
-      32
-    );
-
-    data.conferences.forEach((c: any) => {
-      pm.draw((p, y) => drawRow(p, fonts, "Name", c.name, y), 16);
-      pm.draw((p, y) => drawRow(p, fonts, "City", c.city, y), 16);
-      pm.draw((p, y) => drawRow(p, fonts, "Year", c.year, y), 22);
-    });
   }
 
   /* ================= PROFESSIONAL IDS ================= */
@@ -145,9 +153,9 @@ export function drawAdmissionTemplate(
   if (data.ids?.orcid) {
     pm.draw(
       (p, y) => drawSectionTitle(p, fonts, "Professional IDs", y),
-      32
+      30
     );
 
-    pm.draw((p, y) => drawRow(p, fonts, "ORCID", data.ids.orcid, y), 22);
+    pm.draw((p, y) => drawRow(p, fonts, "ORCID", data.ids.orcid, y), 26);
   }
 }

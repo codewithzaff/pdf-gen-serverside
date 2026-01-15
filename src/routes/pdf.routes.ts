@@ -24,6 +24,13 @@ router.get("/admission/:admissionId/pdf", async (req, res) => {
     }
 
     console.log("✅ Application fetched");
+   console.log("📦 APPLICATION PAYLOAD (student section):");
+console.dir(application.student, { depth: null });
+console.log("📦 APPLICATION PAYLOAD (personalDetails):");
+console.dir(application.personalDetails, { depth: null });
+console.log("📦 APPLICATION PAYLOAD (documents):");
+console.dir(application.documents, { depth: null });
+
 
     // 🔴 RAW API PAYLOAD
     console.log("========== RAW APPLICATION ==========");
