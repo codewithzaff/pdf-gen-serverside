@@ -1,21 +1,20 @@
 import { rgb } from "pdf-lib";
 import { theme } from "../theme/theme";
 
-type HeaderMeta = {
-  studentId?: string;
-};
-
 export function drawHeader(
   page: any,
   fonts: any,
   logo?: any,
-  meta?: HeaderMeta
+  meta?: { studentId?: string }
 ) {
-  if (!fonts?.bold?.font || !fonts?.regular?.font) {
-    throw new Error("drawHeader(): fonts.bold.font or fonts.regular.font missing");
-  }
-
   const { width, height } = page.getSize();
+
+  const boldFont = fonts?.bold?.font;
+  const regularFont = fonts?.regular?.font;
+
+  if (!boldFont || !regularFont) {
+    throw new Error("drawHeader(): fonts not loaded");
+  }
 
   // Background strip
   page.drawRectangle({
@@ -30,33 +29,31 @@ export function drawHeader(
   if (logo) {
     page.drawImage(logo, {
       x: theme.page.margin,
-      y: height - 60,
+      y: height - 50 - 10,
       width: 110,
-      height: 50,
+      height: 45,
     });
   }
 
-  const textX = logo
-    ? theme.page.margin + 130
-    : theme.page.margin;
-
-  // Institute name
+  // Institute name (STATIC → SAFE)
   page.drawText("CLINILAUNCH ELECTRONIC APPLICATION CENTER", {
-    x: textX,
+    x: theme.page.margin + 130,
     y: height - 32,
     size: 14,
-    font: fonts.bold.font,
-    color: rgb(0, 0, 0),
+    font: boldFont,
+    color: rgb(0.05, 0.2, 0.45),
   });
 
-  // Student ID
-  if (meta?.studentId) {
-    page.drawText(`Student ID: ${meta.studentId}`, {
-      x: textX,
-      y: height - 50,
-      size: 9,
-      font: fonts.regular.font,
-      color: rgb(0.3, 0.3, 0.3),
-    });
-  }
+  // Student ID (DYNAMIC → MUST BE STRING)
+  const studentIdText = meta?.studentId
+    ? `Student ID: ${String(meta.studentId)}`
+    : "Student ID: -";
+
+  page.drawText(studentIdText, {
+    x: theme.page.margin + 130,
+    y: height - 50,
+    size: 10,
+    font: regularFont,
+    color: rgb(0.35, 0.35, 0.35),
+  });
 }

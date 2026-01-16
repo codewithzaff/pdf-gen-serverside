@@ -7,19 +7,17 @@ export function drawSectionTitle(
   title: string,
   y: number
 ) {
-  if (!fonts?.bold?.font) {
-    throw new Error("drawSectionTitle(): fonts.bold.font missing");
+  const font = fonts?.bold?.font;
+
+  if (!font) {
+    throw new Error("drawSectionTitle(): bold font missing");
   }
 
-  if (typeof y !== "number" || Number.isNaN(y)) {
-    throw new Error(`drawSectionTitle(): invalid y = ${y}`);
-  }
-
-  page.drawText(title, {
+  page.drawText(title.toUpperCase(), {
     x: theme.page.margin,
     y,
     size: 12,
-    font: fonts.bold.font, // ✅ THIS IS THE FIX
-    color: rgb(0.1, 0.1, 0.1),
+    font,
+    color: rgb(0.05, 0.2, 0.45), // professional dark blue
   });
 }

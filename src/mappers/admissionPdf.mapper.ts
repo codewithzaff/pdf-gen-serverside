@@ -36,16 +36,19 @@ export function mapAdmissionToPdfData(application: any) {
     submittedAt: formatDate(application.submittedAt),
   };
 
+  /* ================= STUDENT PHOTO (BASE64 – SAFE) ================= */
+
+  const profileImagePreview =
+    application.personalDetails?.profileImagePreview ||
+    application.personalDetails?.profileImage ||
+    null;
+
   /* ================= STUDENT ================= */
 
   const name = application.personalDetails?.studentName || {};
 
   const student = {
-    fullName: [
-      name.firstName,
-      name.middleName,
-      name.lastName,
-    ]
+    fullName: [name.firstName, name.middleName, name.lastName]
       .filter(Boolean)
       .join(" "),
     email: application.personalDetails?.email || "",
@@ -58,12 +61,8 @@ export function mapAdmissionToPdfData(application: any) {
   /* ================= ADDRESS ================= */
 
   const address = {
-    permanent: formatAddress(
-      application.personalDetails?.permanentAddress
-    ),
-    current: formatAddress(
-      application.personalDetails?.currentAddress
-    ),
+    permanent: formatAddress(application.personalDetails?.permanentAddress),
+    current: formatAddress(application.personalDetails?.currentAddress),
   };
 
   /* ================= EDUCATION ================= */
@@ -183,5 +182,8 @@ export function mapAdmissionToPdfData(application: any) {
     publications,
     conferences,
     ids,
+
+    // ✅ THIS IS THE KEY FIX
+    profileImagePreview,
   };
 }
