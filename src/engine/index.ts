@@ -4,6 +4,7 @@ import path from "path";
 import { loadFonts } from "./fonts/loadFonts";
 import { drawAdmissionTemplate } from "./templates/admissionTemplate";
 import { drawFooter } from "./layout/footer";
+import { generateBarcodePng } from "./utils/barcode";
 
 export async function createAdmissionPdf(data: any) {
   console.log("🧩 PDF DATA KEYS:", Object.keys(data || {}));
@@ -23,6 +24,26 @@ console.log("🧩 full data snapshot:", JSON.stringify(data, null, 2));
   } catch {
     console.warn("⚠️ Logo not loaded, continuing without logo");
   }
+
+  // ================= BARCODE EMBEDDING =================
+
+if (data?.meta?.applicationId) {
+  console.log("🏷️ Barcode value:", data.meta.applicationId);
+
+  try {
+    const barcodeBytes = await generateBarcodePng(
+      data.meta.applicationId
+    );
+
+    if (barcodeBytes) {
+      data._barcodeImage = await pdfDoc.embedPng(barcodeBytes);
+      console.log("✅ Barcode embedded into PDF");
+    }
+  } catch {
+    console.warn("⚠️ Barcode skipped");
+  }
+}
+
 
   // ================= STUDENT PHOTO EMBEDDING =================
 

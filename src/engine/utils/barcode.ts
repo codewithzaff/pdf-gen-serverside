@@ -1,28 +1,22 @@
-import { writeBarcode } from "@sec-ant/zxing-wasm";
+import bwipjs from "bwip-js";
 
-/**
- * Generate barcode PNG buffer using ZXing (Node.js safe)
- */
 export async function generateBarcodePng(
-  text: string
+  value: string
 ): Promise<Uint8Array | null> {
-  try {
-    if (!text) return null;
+  if (!value) return null;
 
-    const result = await writeBarcode(text, {
-      format: "Code128",
+  try {
+    const png = await bwipjs.toBuffer({
+      bcid: "code128", // Barcode type
+      text: value,
+      scale: 3,
+      height: 10,
+      includetext: false,
     });
 
-    if (result.error) {
-      console.error("ZXing error:", result.error);
-      return null;
-    }
-
-    // Blob → ArrayBuffer → Uint8Array (Node compatible)
-    const arrayBuffer = await result.image.arrayBuffer();
-    return new Uint8Array(arrayBuffer);
+    return new Uint8Array(png);
   } catch (err) {
-    console.error("Barcode generation failed:", err);
+    console.warn("⚠️ Barcode generation failed", err);
     return null;
   }
 }
